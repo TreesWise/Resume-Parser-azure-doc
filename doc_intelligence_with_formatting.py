@@ -239,7 +239,7 @@ def send_to_gpt(date_fields):
         return d
     return replace_null_values(res_json)
 
-def convert_docx_to_pdf(file_path):
+def convert_docx_to_pdf(docx_path):
     """ Converts DOCX to PDF using LibreOffice (Linux) or Microsoft Word (Windows). """
     pdf_path = docx_path.replace(".docx", ".pdf")
 
