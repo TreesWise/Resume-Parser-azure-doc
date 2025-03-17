@@ -10,6 +10,10 @@ import json
 import tempfile
 from fastapi import HTTPException
 from docx2pdf import convert
+import platform
+import subprocess
+import asyncio
+
 
 
 AZURE_OPENAI_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
