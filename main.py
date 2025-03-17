@@ -64,7 +64,7 @@ async def upload_file(
 
         # Handle .docx conversion if needed
         if suffix == ".docx":
-            temp_file_path = convert_docx_to_pdf(temp_file_path)  
+            temp_file_path = await convert_docx_to_pdf(temp_file_path)  
 
         # Extract JSON from document
         extracted_info = extract_resume_info(endpoint, key, model_id, temp_file_path)
