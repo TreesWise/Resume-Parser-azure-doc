@@ -292,4 +292,12 @@ def replace_rank(json_data, rank_mapping):
     elif isinstance(json_data, list):
         return [replace_rank(item, rank_mapping) for item in json_data]
     return json_data
+
+def swap_values(data, swap_map):
+    """Function to swap values in a list of dictionaries based on a given mapping."""
+    for entry in data:
+        temp_values = {new_key: entry[old_key] for old_key, new_key in swap_map.items() if old_key in entry}
+        for old_key, new_key in swap_map.items():
+            if old_key in entry:
+                entry[new_key] = temp_values[new_key]
     
