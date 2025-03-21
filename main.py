@@ -8,15 +8,15 @@ import tempfile
 from datetime import datetime
 # from cv_json_docpage import cv_json
 from dotenv import load_dotenv
-from doc_intelligence_with_formatting import extract_date_fields, update_date_fields, transform_extracted_info, upload_to_blob_storage, swap_values, validate_parsed_resume, extract_resume_info, send_to_gpt, replace_values, replace_rank, convert_docx_to_pdf
+from doc_intelligence_with_formatting import extract_date_fields, update_date_fields, transform_extracted_info, upload_to_blob_storage, reposition_fields, validate_parsed_resume, extract_resume_info, send_to_gpt, replace_values, replace_rank, convert_docx_to_pdf
 from rank_map_dict import rank_mapping
 from dict_file import mapping_dict
 load_dotenv()
 
 app = FastAPI(title="Resume Parser API", version="1.0")
 
-experience_swap_map = {'6': '3', '3': '4', '4': '7', '5': '8', '7': '5', '8': '6'}
-certificate_swap_map = {'2': '4', '3': '5', '4': '2', '5': '3'}
+# experience_swap_map = {'6': '3', '3': '4', '4': '7', '5': '8', '7': '5', '8': '6'}
+# certificate_swap_map = {'2': '4', '3': '5', '4': '2', '5': '3'}
 
 # Secure API Key Authentication
 API_KEY = os.getenv("your_secure_api_key")
@@ -27,7 +27,21 @@ model_id = os.getenv("model_id")
 container_name = os.getenv("container_name")
 connection_string = os.getenv("connection_string")
 
+basic_details_order = [
+    "Name", "FirstName", "MiddleName", "LastName", "Nationality", "Gender", 
+    "Doa", "Dob", "Address1", "Address2", "Address3", "Address4", "City", 
+    "State", "Country", "ZipCode", "EmailId", "MobileNo", "AlternateNo", "Rank"
+]
 
+experience_table_order = [
+    "VesselName", "VesselType", "Position", "VesselSubType", "Employer", 
+    "Flag", "IMO", "FromDt", "ToDt", "others"
+]
+
+certificate_table_order = [
+    "CertificateNo", "CertificateName", "PlaceOfIssue", "IssuedBy", "DateOfIssue", 
+    "DateOfExpiry", "Grade", "Others", "CountryOfIssue"
+]
 
 # Define API Key Security
 api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
@@ -91,8 +105,21 @@ async def upload_file(
         mapped_result = update_date_fields(transformed_data, result)
         course_map = replace_values(mapped_result, mapping_dict)
         rank_map = replace_rank(course_map, rank_mapping)
-        swap_values(rank_map["data"]["experience_table"], experience_swap_map)
-        swap_values(rank_map["data"]["certificate_table"], certificate_swap_map)
+        # swap_values(rank_map["data"]["experience_table"], experience_swap_map)
+        # swap_values(rank_map["data"]["certificate_table"], certificate_swap_map)
+        basic_details = rank_map['data']['basic_details']
+        experience_table = rank_map['data']['experience_table']
+        certificate_table = rank_map['data']['certificate_table']
+
+        # Reposition columns for each section
+        basic_details = reposition_fields(basic_details, basic_details_order)
+        experience_table = reposition_fields(experience_table, experience_table_order)
+        certificate_table = reposition_fields(certificate_table, certificate_table_order)
+
+        # Update the input_json with the new order
+        rank_map['data']['basic_details'] = basic_details
+        rank_map['data']['experience_table'] = experience_table
+        rank_map['data']['certificate_table'] = certificate_table
         
         return rank_map
 
