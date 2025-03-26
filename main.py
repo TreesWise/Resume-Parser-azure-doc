@@ -91,11 +91,11 @@ async def upload_file(
         validation_errors = validate_parsed_resume(extracted_info, temp_file_path, 0.8, container_name, connection_string)
         print(validation_errors)
 
-        if "Low confidence score" in validation_errors:
-            with open('output_format.json', 'r') as f:
-                json_data = json.load(f)
-                json_data["utc_time_stamp"] = datetime.utcnow().strftime("%d/%m/%Y, %H:%M:%S")
-            return json_data
+        # if "Low confidence score" in validation_errors:
+        #     with open('output_format.json', 'r') as f:
+        #         json_data = json.load(f)
+        #         json_data["utc_time_stamp"] = datetime.utcnow().strftime("%d/%m/%Y, %H:%M:%S")
+        #     return json_data
 
         transformed_data = transform_extracted_info(extracted_info)
         print("-----------------------------------------------------------------------------------------------------------------","\n")
@@ -105,21 +105,42 @@ async def upload_file(
         mapped_result = update_date_fields(transformed_data, result)
         course_map = replace_values(mapped_result, mapping_dict)
         rank_map = replace_rank(course_map, rank_mapping)
-        # swap_values(rank_map["data"]["experience_table"], experience_swap_map)
-        # swap_values(rank_map["data"]["certificate_table"], certificate_swap_map)
-        basic_details = rank_map['data']['basic_details']
-        experience_table = rank_map['data']['experience_table']
-        certificate_table = rank_map['data']['certificate_table']
 
-        # Reposition columns for each section
-        basic_details = reposition_fields(basic_details, basic_details_order)
-        experience_table = reposition_fields(experience_table, experience_table_order)
-        certificate_table = reposition_fields(certificate_table, certificate_table_order)
+        
+        # # swap_values(rank_map["data"]["experience_table"], experience_swap_map)
+        # # swap_values(rank_map["data"]["certificate_table"], certificate_swap_map)
+        # basic_details = rank_map['data']['basic_details']
+        # experience_table = rank_map['data']['experience_table']
+        # certificate_table = rank_map['data']['certificate_table']
 
-        # Update the input_json with the new order
+        # # Reposition columns for each section
+        # basic_details = reposition_fields(basic_details, basic_details_order)
+        # experience_table = reposition_fields(experience_table, experience_table_order)
+        # certificate_table = reposition_fields(certificate_table, certificate_table_order)
+
+        # # Update the input_json with the new order
+        # rank_map['data']['basic_details'] = basic_details
+        # rank_map['data']['experience_table'] = experience_table
+        # rank_map['data']['certificate_table'] = certificate_table
+
+        
+        basic_details = rank_map.get('data', {}).get('basic_details', [])
+        experience_table = rank_map.get('data', {}).get('experience_table', [])
+        certificate_table = rank_map.get('data', {}).get('certificate_table', [])
+
+        # Reposition columns only if the section exists
+        if basic_details:
+            basic_details = reposition_fields(basic_details, basic_details_order)
+        if experience_table:
+            experience_table = reposition_fields(experience_table, experience_table_order)
+        if certificate_table:
+            certificate_table = reposition_fields(certificate_table, certificate_table_order)
+
+        # Update the input_json with the new order (only if they exist)
+        rank_map.setdefault('data', {})
         rank_map['data']['basic_details'] = basic_details
         rank_map['data']['experience_table'] = experience_table
-        rank_map['data']['certificate_table'] = certificate_table
+        rank_map['data']['certificate_table'] = certificate_table  
         
         return rank_map
 
