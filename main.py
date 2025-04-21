@@ -17,7 +17,6 @@ app = FastAPI(title="Resume Parser API", version="1.0")
 
 # experience_swap_map = {'6': '3', '3': '4', '4': '7', '5': '8', '7': '5', '8': '6'}
 # certificate_swap_map = {'2': '4', '3': '5', '4': '2', '5': '3'}
-
 # Secure API Key Authentication
 API_KEY = os.getenv("your_secure_api_key")
 API_KEY_NAME = os.getenv("api_key_name")
