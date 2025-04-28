@@ -32,6 +32,7 @@ basic_details_order = [
     "State", "Country", "ZipCode", "EmailId", "MobileNo", "AlternateNo", "Rank"
 ]
 
+
 experience_table_order = [
     "VesselName", "VesselType", "Position", "VesselSubType", "Employer", 
     "Flag", "IMO", "FromDt", "ToDt", "others"
