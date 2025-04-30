@@ -101,7 +101,7 @@ async def upload_file(
         print("-----------------------------------------------------------------------------------------------------------------","\n")
 
         date_fields = extract_date_fields(transformed_data)
-        result = send_to_gpt(date_fields)
+        result, transformed_data = send_to_gpt(date_fields,transformed_data)
         mapped_result = update_date_fields(transformed_data, result)
         course_map = replace_values(mapped_result, mapping_dict)
         rank_map = replace_rank(course_map, rank_mapping)
