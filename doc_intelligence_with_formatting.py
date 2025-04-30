@@ -196,17 +196,106 @@ def extract_resume_info(endpoint, key, model_id, path_to_sample_documents):
     return extracted_info
 
 
-def send_to_gpt(date_fields):
+# def send_to_gpt(date_fields):
 
+
+#     prompt = f"""
+#     Replace all occurrences of dates into the specified format -> DD-MM-YYYY
+    
+#     Here is the data:
+#     {date_fields}
+    
+#     Ensure the date output strictly adheres to the expected date format.
+#     Return the output in JSON format.
+#     """
+
+#     client = AzureOpenAI(
+#         azure_endpoint=AZURE_OPENAI_ENDPOINT,
+#         api_key=AZURE_OPENAI_API_KEY,
+#         api_version=OPENAI_API_VERSION,
+#     )
+
+#     response = client.chat.completions.create(
+#         model="gpt-4o",
+#         messages=[
+#             {"role": "system", "content": """You are an expert AI trained to format all occurrences of dates into DD-MM-YYYY. Make sure to strictly adhere to this format. 
+#             If a given date cannot be changed to this format, change it to null
+#             Some of the dates might be given in in english. Try your best to change all these kinds of dates to DD-MM-YYYY format
+#             """},
+#             {"role": "user", "content": prompt}
+#         ],
+#         response_format={"type": "json_object"},
+#         temperature=0
+#     )
+
+#     res_json = json.loads(response.choices[0].message.content)
+#     def replace_null_values(d):
+#         if isinstance(d, dict):
+#             return {k: replace_null_values(v) for k, v in d.items()}
+#         elif isinstance(d, list):
+#             return [replace_null_values(v) for v in d]
+#         elif d == "null":  # Convert string "null" to None
+#             return None
+#         return d
+#     return replace_null_values(res_json)
+
+
+
+def send_to_gpt(date_fields, transformed_data):
+
+
+    date_fields_str = json.dumps(date_fields)
+    extracted_info_str = json.dumps(transformed_data)
 
     prompt = f"""
-    Replace all occurrences of dates into the specified format -> DD-MM-YYYY
-    
-    Here is the data:
-    {date_fields}
-    
-    Ensure the date output strictly adheres to the expected date format.
-    Return the output in JSON format.
+    I have two JSON objects: `date_fields`{date_fields_str} and `extracted_info`{extracted_info_str}. Please apply the following transformations:
+
+    1. **Date Formatting (applies to `date_fields`)**:
+        - Convert all dates to the format DD-MM-YYYY.
+        - Parse English date formats (e.g., "March 5, 2021") and convert them accordingly.
+        - If a date is invalid or cannot be parsed, set its value to null.
+        - Ensure strict adherence to DD-MM-YYYY format.
+
+    2. **Nationality Field (applies to `extracted_info`)**:
+        - Replace country names in the `Nationality` field with their corresponding demonym (adjective form).
+        - Example: "France" -> "French", "Ukraine" -> "Ukrainian".
+
+    3. **Gender Field (applies to `extracted_info`)**:
+        - Normalize gender values:
+            - "male" -> "Male"
+            - "female" -> "Female".
+
+    4. **Certificate Table – Location Rules (applies to `extracted_info`)**:
+        - For each record in `certificate_table`:
+            - If `PlaceOfIssue` is a country and `CountryOfIssue` is null, copy `PlaceOfIssue` into `CountryOfIssue`.
+            - If `PlaceOfIssue` is a city or state, look up its country and assign it to `CountryOfIssue`.
+            - If `PlaceOfIssue` contains both a city/state and a country (e.g., "New York, USA"), keep the city/state in `PlaceOfIssue` and assign the country to `CountryOfIssue`.
+
+    5. **🧠 Duplication & Propagation Logic (applies to `certificate_table` and `experience_table`)**:
+        - If any value (especially in `CountryOfIssue`) contains duplicated content like `"Russia\\nRussia"`, remove the repetition and keep only one instance (e.g., "Russia").
+        - Then, **if the next row has a `null` value in the same field**, fill it with the most recent non-null cleaned value.
+        - This rule applies dynamically for all rows and any repeated content.
+
+    6. **Remove `\\n` (applies to `extracted_info`)**:
+        - Remove all `\\n` characters from the entire `extracted_info` JSON wherever they appear.
+
+    7. **Fix broken words due to unnecessary spaces**:
+        - Merge any broken words that are split by accidental spaces. For example:
+            - "Carri er" → "Carrier"
+         - Always ensure words are properly spaced and human-readable.
+
+    8. **Position Field Normalization (applies to experience_table)**:
+        - Standardize ranks and positions meaningfully.
+        - If a value like "CHIEF ENGINEER 2-ND" appears, it likely represents two positions: "CHIEF ENGINEER" and "2ND ENGINEER". Assign "CHIEF ENGINEER" to the first row and "2ND ENGINEER" to the next if applicable.
+        - If the next row’s position is a generic term like "ENGINEER", and the previous row had a clearly defined higher rank, refine it by prefixing with a rank based on prior info (e.g., "2ND ENGINEER").
+        - Correct inconsistent naming formats, e.g., "2-ND ENGINEER" → "2ND ENGINEER", "3-RD ENGINEER" → "3RD ENGINEER", "1-ST OFFICER" → "1ST OFFICER", etc.
+        - Always output clean, full position titles that accurately reflect rank and role.
+
+    Please return the modified objects as a single JSON object in this format:
+    {{
+        "date_fields": <modified date_fields JSON>,
+        "extracted_info": <modified extracted_info JSON>
+    }}
     """
 
     client = AzureOpenAI(
@@ -218,10 +307,7 @@ def send_to_gpt(date_fields):
     response = client.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": """You are an expert AI trained to format all occurrences of dates into DD-MM-YYYY. Make sure to strictly adhere to this format. 
-            If a given date cannot be changed to this format, change it to null
-            Some of the dates might be given in in english. Try your best to change all these kinds of dates to DD-MM-YYYY format
-            """},
+            {"role": "system", "content": "You are a data formatter."},
             {"role": "user", "content": prompt}
         ],
         response_format={"type": "json_object"},
@@ -229,15 +315,18 @@ def send_to_gpt(date_fields):
     )
 
     res_json = json.loads(response.choices[0].message.content)
+
     def replace_null_values(d):
         if isinstance(d, dict):
             return {k: replace_null_values(v) for k, v in d.items()}
         elif isinstance(d, list):
             return [replace_null_values(v) for v in d]
-        elif d == "null":  # Convert string "null" to None
+        elif d == "null":
             return None
         return d
-    return replace_null_values(res_json)
+
+    cleaned = replace_null_values(res_json)
+    return cleaned.get("date_fields"), cleaned.get("extracted_info")
 
 async def convert_docx_to_pdf(docx_path):
     """ Converts DOCX to PDF using LibreOffice (Linux) or Microsoft Word (Windows). """
