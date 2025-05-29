@@ -455,27 +455,26 @@ async def upload_file(
         # # transformed_data = send_to_gpt(rank_map)
 
         experience_table = rank_map["data"]["experience_table"]
-        # if experience_table:
+        if experience_table:
             # Keep the header row intact
-        filtered_experience = [experience_table[0]]
-
-        # Define the null threshold (remove if more than 8 are null out of 10)
-        max_allowed_nulls = 8
-
-        # Filter rows
-        for row in experience_table[1:]:
-            # Treat as valid row only if it's a full record with limited nulls
-            if isinstance(row, dict):
-                null_count = sum(1 for v in row.values() if v is None)
-                if null_count < max_allowed_nulls:
-                    filtered_experience.append(row)
-
-        # Update the data with filtered experience_table
-        rank_map["data"]["experience_table"] = filtered_experience
-        print(filtered_experience)
-
-
+            filtered_experience = [experience_table[0]]
+    
+            # Define the null threshold (remove if more than 8 are null out of 10)
+            max_allowed_nulls = 8
+    
+            # Filter rows
+            for row in experience_table[1:]:
+                # Treat as valid row only if it's a full record with limited nulls
+                if isinstance(row, dict):
+                    null_count = sum(1 for v in row.values() if v is None)
+                    if null_count < max_allowed_nulls:
+                        filtered_experience.append(row)
+    
+            # Update the data with filtered experience_table
+            rank_map["data"]["experience_table"] = filtered_experience
+            print(filtered_experience)
         return rank_map
+        
     except HTTPException as http_exc:
         # FastAPI will return this as-is
         raise http_exc
