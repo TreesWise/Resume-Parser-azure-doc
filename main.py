@@ -152,6 +152,7 @@
 
 
 
+
 from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Security, Depends
 from fastapi.responses import JSONResponse
 from fastapi.security.api_key import APIKeyHeader
@@ -162,7 +163,7 @@ import tempfile
 from datetime import datetime
 # from cv_json_docpage import cv_json
 from dotenv import load_dotenv
-from doc_intelligence_with_formatting import basic_openai,certificate_openai, experience_openai, extract_date_fields, update_date_fields, transform_extracted_info, upload_to_blob_storage, reposition_fields, validate_parsed_resume, extract_resume_info, send_to_gpt, replace_values, replace_rank, convert_docx_to_pdf
+from doc_intelligence_with_formatting import basic_openai,certificate_openai, experience_openai, reposition_fields, validate_parsed_resume, extract_resume_info, replace_values, replace_rank, convert_docx_to_pdf
 from rank_map_dict import rank_mapping
 from dict_file import mapping_dict
 import os
@@ -424,13 +425,7 @@ async def upload_file(
         print(validation_errors)
 
 
-        # transformed_data = transform_extracted_info(extracted_info)
-        # print(transformed_data)
-        # print("-----------------------------------------------transformed_data------------------------------------------------------------------","\n")
 
-        # date_fields = extract_date_fields(transformed_data)
-        # result, transformed_data = send_to_gpt(date_fields,transformed_data)
-        # mapped_result = update_date_fields(transformed_data, result)
         course_map = replace_values(final_output, mapping_dict)
         rank_map = replace_rank(course_map, rank_mapping)
         print(rank_map)
@@ -499,5 +494,6 @@ async def upload_file(
     finally:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
 
 
