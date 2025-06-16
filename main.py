@@ -163,7 +163,7 @@ import tempfile
 from datetime import datetime
 # from cv_json_docpage import cv_json
 from dotenv import load_dotenv
-from doc_intelligence_with_formatting import basic_openai,certificate_openai, experience_openai, reposition_fields, validate_parsed_resume, extract_resume_info, replace_values, replace_rank, convert_docx_to_pdf
+from doc_intelligence_with_formatting import basic_openai,certificate_openai, experience_openai, reposition_fields, validate_parsed_resume, extract_resume_info, replace_values, replace_rank, convert_docx_to_pdf,replace_country
 from rank_map_dict import rank_mapping
 from dict_file import mapping_dict
 import os
