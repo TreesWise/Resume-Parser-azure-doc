@@ -428,7 +428,9 @@ async def upload_file(
 
         course_map = replace_values(final_output, mapping_dict)
         rank_map = replace_rank(course_map, rank_mapping)
-        print(rank_map)
+        rank_map=replace_country(rank_map,country_mapping)
+        final_output['data']['basic_details'] = replace_country(rank_map['data']['basic_details'], country_mapping)
+        final_output['data']['certificate_table'] = replace_country(rank_map['data']['certificate_table'], country_mapping)
 
         # rank_map_dict = json.loads(rank_map)
 
