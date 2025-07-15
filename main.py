@@ -175,7 +175,7 @@ from datetime import datetime
 import asyncio
 from dotenv import load_dotenv
 
-
+import re
 load_dotenv()
 
 app = FastAPI(title="Resume Parser API", version="1.0")
