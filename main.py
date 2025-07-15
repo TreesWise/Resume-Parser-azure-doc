@@ -153,7 +153,8 @@
 
 
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Security, Depends
+
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Security, Depends,Body
 from fastapi.responses import JSONResponse
 from fastapi.security.api_key import APIKeyHeader
 import os
@@ -162,7 +163,6 @@ import json
 import tempfile
 from datetime import datetime
 # from cv_json_docpage import cv_json
-from dotenv import load_dotenv
 from country_mapping import country_mapping
 from doc_intelligence_with_formatting import basic_openai,certificate_openai, experience_openai, reposition_fields, validate_parsed_resume, extract_resume_info, replace_values, replace_rank, convert_docx_to_pdf,replace_country
 from rank_map_dict import rank_mapping
@@ -173,6 +173,16 @@ import shutil
 import json
 from datetime import datetime
 import asyncio
+
+import pandas as pd
+import io
+import time
+import schedule
+from sqlalchemy import create_engine, text
+from typing import List,Dict
+from azure.storage.blob import BlobServiceClient
+from pydantic import BaseModel
+from dotenv import load_dotenv
 import re
 
 
@@ -246,11 +256,6 @@ def clean_vessel_names(experience_table):
 
     return experience_table
 
-
-
-
-
-
 @app.post("/upload/")
 async def upload_file(
     api_key: str = Depends(verify_api_key),  # Enforce API key authentication
@@ -321,11 +326,15 @@ async def upload_file(
         certificate_table_merge = cert_out['certificate_table']
         print("certificate_table_merge")
         print(certificate_table_merge)
-
+        
         
         # experience_table_merge = expe_out['experience_table']
         # print("experience_table_merge")
         # print(experience_table_merge)
+        
+        
+        
+        
         experience_table_merge = expe_out['experience_table']
         experience_table_merge = clean_vessel_names(experience_table_merge)
         print("experience_table_merge")
@@ -536,6 +545,7 @@ async def upload_file(
     finally:
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
+
 
 
 
